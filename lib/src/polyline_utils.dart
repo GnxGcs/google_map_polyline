@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:google_map_polyline_new/src/route_mode.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -27,8 +28,24 @@ class PolylineUtils {
 
     Response _response;
     Dio _dio = new Dio();
+    Options? _options;
+
+    if (Platform.isAndroid &&
+        (_data!.xAndroidCert?.isNotEmpty ?? false) &&
+        (_data!.xAndroidPackage?.isNotEmpty ?? false)) {
+      _options = Options(headers: {
+        'X-Android-Package': _data!.xAndroidPackage,
+        'X-Android-Cert': _data!.xAndroidCert,
+      });
+    } else if (Platform.isIOS &&
+        (_data!.xIosBundleIdentifier?.isNotEmpty ?? false)) {
+      _options = Options(headers: {
+        'X-Ios-Bundle-Identifier': _data!.xIosBundleIdentifier,
+      });
+
     _response = await _dio.get(
         "https://maps.googleapis.com/maps/api/directions/json",
+        options: _options,
         queryParameters: qParam);
 
     try {
@@ -85,7 +102,7 @@ class PolylineUtils {
         return 'walking';
       case RouteMode.bicycling:
         return 'bicycling';
-        case RouteMode.transit:
+      case RouteMode.transit:
         return 'transit';
       default:
         return null;
